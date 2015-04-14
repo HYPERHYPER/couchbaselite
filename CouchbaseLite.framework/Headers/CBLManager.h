@@ -47,8 +47,8 @@ typedef struct CBLManagerOptions {
     @param options  If non-NULL, a pointer to options (read-only and no-replicator).
     @param outError  On return, the error if any. */
 - (instancetype) initWithDirectory: (NSString*)directory
-                           options: (__nullable const CBLManagerOptions*)options
-                             error: (__nullable NSError**)outError;
+                           options: (const CBLManagerOptions* __nullable)options
+                             error: (NSError**)outError;
 
 /** Creates a copy of this CBLManager, which can be used on a different thread. */
 - (instancetype) copy;
@@ -69,12 +69,25 @@ typedef struct CBLManagerOptions {
     Multiple calls with the same name will return the same CBLDatabase instance.
     NOTE: Database names may not contain capital letters! */
 - (nullable CBLDatabase*) databaseNamed: (NSString*)name
-                                  error: (__nullable NSError**)outError;
+                                  error: (NSError**)outError;
 
 /** Returns the database with the given name, or nil if it doesn't exist.
     Multiple calls with the same name will return the same CBLDatabase instance. */
 - (nullable CBLDatabase*) existingDatabaseNamed: (NSString*)name
-                                          error: (__nullable NSError**)outError;
+                                          error: (NSError**)outError;
+
+/** Returns YES if a database with the given name exists. Does not open the database. */
+- (BOOL) databaseExistsNamed: (NSString*)name;
+
+/** Registers an encryption key for a database. This must be called before opening an encrypted
+    database, or before creating a database that's to be encrypted.
+    If the key is incorrect (or no key is given for an encrypted database), the subsequent call
+    to open the database will fail with an error with code 401.
+    To use this API, the database storage engine must support encryption. In the case of SQLite,
+    this means the application must be linked with SQLCipher <http://sqlcipher.net> instead of
+    regular SQLite. Otherwise opening the database will fail with an error. */
+- (BOOL) registerEncryptionKey: (nullable id)encryptionKey
+              forDatabaseNamed: (NSString*)name;
 
 /** Same as -existingDatabaseNamed:. Enables "[]" access in Xcode 4.4+ */
 - (nullable CBLDatabase*) objectForKeyedSubscript: (NSString*)key;
@@ -90,7 +103,7 @@ typedef struct CBLManagerOptions {
     @return  YES if the database was copied, NO if an error occurred. */
 - (BOOL) replaceDatabaseNamed: (NSString*)databaseName
               withDatabaseDir: (NSString*)databaseDir
-                        error: (__nullable NSError**)outError;
+                        error: (NSError**)outError;
 
 #pragma mark - CONCURRENCY:
 
